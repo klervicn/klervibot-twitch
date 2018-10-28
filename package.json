@@ -5,6 +5,8 @@
   "main": "bot.js",
   "dependencies": {
     "forever": "^0.15.3",
+    "moment": "^2.22.2",
+    "node-fetch": "^2.2.0",
     "tmi.js": "^1.2.1"
   },
   "devDependencies": {},

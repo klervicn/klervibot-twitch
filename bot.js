@@ -1,5 +1,7 @@
-const { oauth } = require('./config');
+const { oauth, clientId } = require('./config');
+const fetch = require('node-fetch');
 const tmi = require('tmi.js');
+const moment = require('moment');
 const youtubeLink = {
   nayrulive: 'https://www.youtube.com/c/Nayru',
   collinsandkosuke: 'https://www.youtube.com/collinskosuke',
@@ -37,7 +39,7 @@ let opts = {
 
 // These are the commands the bot knows (defined below):
 //  tips, palier, twitter, insta
-let knownCommands = { echo, youtube, insta, twitter };
+let knownCommands = { echo, youtube, insta, twitter, uptime };
 
 // Function called when the "echo" command is issued:
 function echo(target, context, params) {
@@ -71,6 +73,37 @@ function twitter(target, context) {
   const channel = target.split('#');
   const msg = 'Pour être au courant de tout : ' + twitterLink[channel[1]];
   sendMessage(target, context, msg);
+}
+
+function uptime(target, context) {
+  const channel = target.split('#');
+  const now = moment();
+
+  fetch(`https://api.twitch.tv/helix/streams?user_login=${channel[1]}`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json', 'Client-ID': clientId }
+  })
+    .then(res => res.json())
+    .then(json => {
+      if (json.data[0]) {
+        sendMessage(
+          target,
+          context,
+          `Le stream de ${channel[1]} a commencé il y a ${now.diff(
+            json.data[0].started_at,
+            'minutes'
+          )} minutes`
+        );
+      } else {
+        sendMessage(
+          target,
+          context,
+          `${
+            channel[1]
+          } n'est pas en live actuellement, mais vous pouvez suivre la chaîne pour être notifié lors des prochains streams !`
+        );
+      }
+    });
 }
 
 // Helper function to send the correct type of message:
