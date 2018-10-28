@@ -1,5 +1,5 @@
+const { oauth } = require('./config');
 const tmi = require('tmi.js');
-import { oauth } from './config';
 const youtubeLink = {
   nayrulive: 'https://www.youtube.com/c/Nayru',
   collinsandkosuke: 'https://www.youtube.com/collinskosuke',
