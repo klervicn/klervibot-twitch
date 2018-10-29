@@ -2,6 +2,27 @@ const { oauth, clientId } = require('./config');
 const fetch = require('node-fetch');
 const tmi = require('tmi.js');
 const moment = require('moment');
+const oldPointer = moment('20000101');
+const commandHistory = {
+  nayrulive: {
+    twitter: oldPointer,
+    youtube: oldPointer,
+    insta: oldPointer,
+    uptime: oldPointer
+  },
+  frozencrystal: {
+    twitter: oldPointer,
+    youtube: oldPointer,
+    insta: oldPointer,
+    uptime: oldPointer
+  },
+  collinsandkosuke: {
+    twitter: oldPointer,
+    youtube: oldPointer,
+    insta: oldPointer,
+    uptime: oldPointer
+  }
+};
 
 const youtubeLink = {
   nayrulive: 'https://www.youtube.com/c/Nayru',
@@ -43,23 +64,36 @@ const opts = {
 const knownCommands = { youtube, insta, twitter, uptime };
 
 function youtube(target, context) {
+  const now = moment();
   const channel = target.split('#');
   const msg =
     "Pour nous rejoindre sur YouTube, c'est par ici : " +
     youtubeLink[channel[1]];
-  sendMessage(target, context, msg);
+
+  if (now.diff(commandHistory[channel[1]].youtube, 'seconds') >= 15) {
+    sendMessage(target, context, msg);
+    commandHistory[channel[1]].youtube = now;
+  } else return;
 }
 
 function insta(target, context) {
+  const now = moment();
   const channel = target.split('#');
   const msg = "Les jolies photos, c'est par là : " + instaLink[channel[1]];
-  sendMessage(target, context, msg);
+  if (now.diff(commandHistory[channel[1]].insta, 'seconds') >= 15) {
+    sendMessage(target, context, msg);
+    commandHistory[channel[1]].insta = now;
+  } else return;
 }
 
 function twitter(target, context) {
+  const now = moment();
   const channel = target.split('#');
   const msg = 'Pour être au courant de tout : ' + twitterLink[channel[1]];
-  sendMessage(target, context, msg);
+  if (now.diff(commandHistory[channel[1]].twitter, 'seconds') >= 15) {
+    sendMessage(target, context, msg);
+    commandHistory[channel[1]].twitter = now;
+  } else return;
 }
 
 function uptime(target, context) {
@@ -73,22 +107,28 @@ function uptime(target, context) {
     .then(res => res.json())
     .then(json => {
       if (json.data[0]) {
-        sendMessage(
-          target,
-          context,
-          `Le stream de ${channel[1]} a commencé il y a ${now.diff(
-            json.data[0].started_at,
-            'minutes'
-          )} minutes`
-        );
+        if (now.diff(commandHistory[channel[1]].uptime, 'seconds') >= 15) {
+          sendMessage(
+            target,
+            context,
+            `Le stream de ${channel[1]} a commencé il y a ${now.diff(
+              json.data[0].started_at,
+              'minutes'
+            )} minutes`
+          );
+          commandHistory[channel[1]].uptime = now;
+        } else return;
       } else {
-        sendMessage(
-          target,
-          context,
-          `${
-            channel[1]
-          } n'est pas en live actuellement, mais vous pouvez suivre la chaîne pour être notifié lors des prochains streams !`
-        );
+        if (now.diff(commandHistory[channel[1]].uptime, 'seconds') >= 15) {
+          sendMessage(
+            target,
+            context,
+            `${
+              channel[1]
+            } n'est pas en live actuellement, mais vous pouvez suivre la chaîne pour être notifié lors des prochains streams !`
+          );
+          commandHistory[channel[1]].uptime = now;
+        } else return;
       }
     });
 }
