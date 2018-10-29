@@ -2,6 +2,7 @@ const { oauth, clientId } = require('./config');
 const fetch = require('node-fetch');
 const tmi = require('tmi.js');
 const moment = require('moment');
+
 const youtubeLink = {
   nayrulive: 'https://www.youtube.com/c/Nayru',
   collinsandkosuke: 'https://www.youtube.com/collinskosuke',
@@ -21,9 +22,9 @@ const twitterLink = {
 };
 
 // Valid commands start with:
-let commandPrefix = '!';
+const commandPrefix = '!';
 // Define configuration options:
-let opts = {
+const opts = {
   options: {
     debug: true
   },
@@ -39,21 +40,7 @@ let opts = {
 
 // These are the commands the bot knows (defined below):
 //  tips, palier, twitter, insta
-let knownCommands = { echo, youtube, insta, twitter, uptime };
-
-// Function called when the "echo" command is issued:
-function echo(target, context, params) {
-  // If there's something to echo:
-  if (params.length) {
-    // Join the params into a string:
-    const msg = params.join(' ');
-    // Send it back to the correct place:
-    sendMessage(target, context, msg);
-  } else {
-    // Nothing to echo
-    console.log(`* Nothing to echo`);
-  }
-}
+const knownCommands = { youtube, insta, twitter, uptime };
 
 function youtube(target, context) {
   const channel = target.split('#');
