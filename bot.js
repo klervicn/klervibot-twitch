@@ -5,18 +5,21 @@ const moment = require("moment");
 const oldPointer = moment("20000101");
 const commandHistory = {
   nayrulive: {
+    commands: oldPointer,
     twitter: oldPointer,
     youtube: oldPointer,
     insta: oldPointer,
     uptime: oldPointer
   },
   frozencrystal: {
+    commands: oldPointer,
     twitter: oldPointer,
     youtube: oldPointer,
     insta: oldPointer,
     uptime: oldPointer
   },
   collinsandkosuke: {
+    commands: oldPointer,
     twitter: oldPointer,
     youtube: oldPointer,
     insta: oldPointer,
@@ -43,6 +46,15 @@ const twitterLink = {
   frozencrystal: "https://twitter.com/frozencrystal"
 };
 
+const commandsAvailable = {
+  nayrulive:
+    "Les commandes disponibles sont !insta, !twitter, !uptime et !youtube",
+  collinsandkosuke:
+    "Les commandes disponibles sont !insta, !serveur, !twitter, !uptime et !youtube",
+  frozencrystal:
+    "Les commandes disponibles sont !insta, !twitter, !uptime et !youtube"
+};
+
 // Valid commands start with:
 const commandPrefix = "!";
 // Define configuration options:
@@ -62,7 +74,18 @@ const opts = {
 
 // These are the commands the bot knows (defined below):
 //  tips, palier, twitter, insta
-const knownCommands = { youtube, insta, twitter, uptime, serveur };
+const knownCommands = { youtube, insta, twitter, uptime, serveur, commands };
+
+function commands(target, context) {
+  const now = moment();
+  const channel = target.split("#");
+  const msg = commandsAvailable[channel[1]];
+
+  if (now.diff(commandHistory[channel[1]].commands, "seconds") >= 15) {
+    sendMessage(target, context, msg);
+    commandHistory[channel[1]].commands = now;
+  } else return;
+}
 
 function youtube(target, context) {
   const now = moment();
