@@ -123,14 +123,20 @@ function uptime(target, context) {
     .then(json => {
       if (json.data[0]) {
         if (now.diff(commandHistory[channel[1]].uptime, "seconds") >= 15) {
-          sendMessage(
-            target,
-            context,
-            `Le stream de ${channel[1]} a commencé il y a ${now.diff(
-              json.data[0].started_at,
-              "minutes"
-            )} minutes`
-          );
+          const diff = now.diff(json.data[0].started_at);
+          const diffDuration = moment.duration(diff);
+          const diffHours = diffDuration.hours();
+          const diffMinutes = diffDuration.minutes();
+          const mess =
+            diffHours > 0
+              ? `Le stream de ${
+                  channel[1]
+                } a commencé il y a ${diffHours} heure(s) et ${diffMinutes} minute(s)`
+              : `Le stream de ${
+                  channel[1]
+                } a commencé il y a ${diffMinutes} minute(s)`;
+
+          sendMessage(target, context, mess);
           commandHistory[channel[1]].uptime = now;
         } else return;
       } else {
