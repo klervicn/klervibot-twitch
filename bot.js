@@ -1,8 +1,8 @@
-const { oauth, clientId } = require('./config');
-const fetch = require('node-fetch');
-const tmi = require('tmi.js');
-const moment = require('moment');
-const oldPointer = moment('20000101');
+const { oauth, clientId } = require("./config");
+const fetch = require("node-fetch");
+const tmi = require("tmi.js");
+const moment = require("moment");
+const oldPointer = moment("20000101");
 const commandHistory = {
   nayrulive: {
     twitter: oldPointer,
@@ -20,30 +20,31 @@ const commandHistory = {
     twitter: oldPointer,
     youtube: oldPointer,
     insta: oldPointer,
-    uptime: oldPointer
+    uptime: oldPointer,
+    server: oldPointer
   }
 };
 
 const youtubeLink = {
-  nayrulive: 'https://www.youtube.com/c/Nayru',
-  collinsandkosuke: 'https://www.youtube.com/collinskosuke',
-  frozencrystal: 'https://www.youtube.com/user/teddymint3'
+  nayrulive: "https://www.youtube.com/c/Nayru",
+  collinsandkosuke: "https://www.youtube.com/collinskosuke",
+  frozencrystal: "https://www.youtube.com/user/teddymint3"
 };
 
 const instaLink = {
-  nayrulive: 'https://www.instagram.com/nayrutv/',
-  collinsandkosuke: 'https://www.instagram.com/collinskosuke/',
-  frozencrystal: 'https://www.instagram.com/_frozencrystal/'
+  nayrulive: "https://www.instagram.com/nayrutv/",
+  collinsandkosuke: "https://www.instagram.com/collinskosuke/",
+  frozencrystal: "https://www.instagram.com/_frozencrystal/"
 };
 
 const twitterLink = {
-  nayrulive: 'https://twitter.com/Nayruuu',
-  collinsandkosuke: 'https://twitter.com/CollinsKosuke',
-  frozencrystal: 'https://twitter.com/frozencrystal'
+  nayrulive: "https://twitter.com/Nayruuu",
+  collinsandkosuke: "https://twitter.com/CollinsKosuke",
+  frozencrystal: "https://twitter.com/frozencrystal"
 };
 
 // Valid commands start with:
-const commandPrefix = '!';
+const commandPrefix = "!";
 // Define configuration options:
 const opts = {
   options: {
@@ -53,24 +54,24 @@ const opts = {
     reconnect: true
   },
   identity: {
-    username: 'klervibot',
-    password: 'oauth:' + oauth
+    username: "klervibot",
+    password: "oauth:" + oauth
   },
-  channels: ['nayrulive', 'collinsandkosuke', 'frozencrystal']
+  channels: ["nayrulive", "collinsandkosuke", "frozencrystal"]
 };
 
 // These are the commands the bot knows (defined below):
 //  tips, palier, twitter, insta
-const knownCommands = { youtube, insta, twitter, uptime };
+const knownCommands = { youtube, insta, twitter, uptime, serveur };
 
 function youtube(target, context) {
   const now = moment();
-  const channel = target.split('#');
+  const channel = target.split("#");
   const msg =
     "Pour nous rejoindre sur YouTube, c'est par ici : " +
     youtubeLink[channel[1]];
 
-  if (now.diff(commandHistory[channel[1]].youtube, 'seconds') >= 15) {
+  if (now.diff(commandHistory[channel[1]].youtube, "seconds") >= 15) {
     sendMessage(target, context, msg);
     commandHistory[channel[1]].youtube = now;
   } else return;
@@ -78,48 +79,62 @@ function youtube(target, context) {
 
 function insta(target, context) {
   const now = moment();
-  const channel = target.split('#');
+  const channel = target.split("#");
   const msg = "Les jolies photos, c'est par là : " + instaLink[channel[1]];
-  if (now.diff(commandHistory[channel[1]].insta, 'seconds') >= 15) {
+  if (now.diff(commandHistory[channel[1]].insta, "seconds") >= 15) {
     sendMessage(target, context, msg);
     commandHistory[channel[1]].insta = now;
   } else return;
 }
 
+function serveur(target, context) {
+  const now = moment();
+  const channel = target.split("#");
+  const msg =
+    "C&K jouent sur un serveur privé VeryGames. Si tu es intéressé, voici le lien pour louer un serveur : https://www.verygames.net/fr !";
+  if (
+    channel[1] === "collinsandkosuke" &&
+    now.diff(commandHistory[channel[1]].server, "seconds") >= 15
+  ) {
+    sendMessage(target, context, msg);
+    commandHistory[channel[1]].server = now;
+  } else return;
+}
+
 function twitter(target, context) {
   const now = moment();
-  const channel = target.split('#');
-  const msg = 'Pour être au courant de tout : ' + twitterLink[channel[1]];
-  if (now.diff(commandHistory[channel[1]].twitter, 'seconds') >= 15) {
+  const channel = target.split("#");
+  const msg = "Pour être au courant de tout : " + twitterLink[channel[1]];
+  if (now.diff(commandHistory[channel[1]].twitter, "seconds") >= 15) {
     sendMessage(target, context, msg);
     commandHistory[channel[1]].twitter = now;
   } else return;
 }
 
 function uptime(target, context) {
-  const channel = target.split('#');
+  const channel = target.split("#");
   const now = moment();
 
   fetch(`https://api.twitch.tv/helix/streams?user_login=${channel[1]}`, {
-    method: 'GET',
-    headers: { 'Content-Type': 'application/json', 'Client-ID': clientId }
+    method: "GET",
+    headers: { "Content-Type": "application/json", "Client-ID": clientId }
   })
     .then(res => res.json())
     .then(json => {
       if (json.data[0]) {
-        if (now.diff(commandHistory[channel[1]].uptime, 'seconds') >= 15) {
+        if (now.diff(commandHistory[channel[1]].uptime, "seconds") >= 15) {
           sendMessage(
             target,
             context,
             `Le stream de ${channel[1]} a commencé il y a ${now.diff(
               json.data[0].started_at,
-              'minutes'
+              "minutes"
             )} minutes`
           );
           commandHistory[channel[1]].uptime = now;
         } else return;
       } else {
-        if (now.diff(commandHistory[channel[1]].uptime, 'seconds') >= 15) {
+        if (now.diff(commandHistory[channel[1]].uptime, "seconds") >= 15) {
           sendMessage(
             target,
             context,
@@ -135,7 +150,7 @@ function uptime(target, context) {
 
 // Helper function to send the correct type of message:
 function sendMessage(target, context, message) {
-  if (context['message-type'] === 'whisper') {
+  if (context["message-type"] === "whisper") {
     client.whisper(target, message);
   } else {
     client.say(target, message);
@@ -146,19 +161,19 @@ function sendMessage(target, context, message) {
 let client = new tmi.client(opts);
 
 // Register our event handlers (defined below):
-client.on('message', onMessageHandler);
-client.on('connected', onConnectedHandler);
-client.on('disconnected', onDisconnectedHandler);
+client.on("message", onMessageHandler);
+client.on("connected", onConnectedHandler);
+client.on("disconnected", onDisconnectedHandler);
 
 // Connect to Twitch:
 client.connect();
 
-client.on('connected', (adress, port) => {
+client.on("connected", (adress, port) => {
   console.log(
     client.getUsername() +
       " s'est connecté sur : " +
       adress +
-      ', port : ' +
+      ", port : " +
       port
   );
 });
@@ -172,13 +187,13 @@ function onMessageHandler(target, context, msg, self) {
   // This isn't a command since it has no prefix:
   if (msg.substr(0, 1) !== commandPrefix) {
     console.log(
-      `[${target} (${context['message-type']})] ${context.username}: ${msg}`
+      `[${target} (${context["message-type"]})] ${context.username}: ${msg}`
     );
     return;
   }
 
   // Split the message into individual words:
-  const parse = msg.slice(1).split(' ');
+  const parse = msg.slice(1).split(" ");
   // The command name is the first (0th) one:
   const commandName = parse[0];
   // The rest (if any) are the parameters:
