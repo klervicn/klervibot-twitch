@@ -12,6 +12,7 @@ const commandHistory = {
     uptime: oldPointer
   },
   frozencrystal: {
+    boutique: oldPointer,
     commands: oldPointer,
     twitter: oldPointer,
     youtube: oldPointer,
@@ -19,6 +20,7 @@ const commandHistory = {
     uptime: oldPointer
   },
   collinsandkosuke: {
+    boutique: oldPointer,
     commands: oldPointer,
     twitter: oldPointer,
     youtube: oldPointer,
@@ -26,6 +28,11 @@ const commandHistory = {
     uptime: oldPointer,
     server: oldPointer
   }
+};
+
+const boutiqueLink = {
+  collinsandkosuke: `La boutique de vêtement de C&K, c'est par ici : https://teespring.com/stores/collinskosuke`,
+  frozencrystal: `Y'a de chouettes choses à acheter par là : https://teespring.com/stores/frozencrystalshop`
 };
 
 const youtubeLink = {
@@ -50,9 +57,9 @@ const commandsAvailable = {
   nayrulive:
     "Les commandes disponibles sont !insta, !twitter, !uptime et !youtube",
   collinsandkosuke:
-    "Les commandes disponibles sont !insta, !serveur, !twitter, !uptime et !youtube",
+    "Les commandes disponibles sont !boutique, !insta, !serveur, !twitter, !uptime et !youtube",
   frozencrystal:
-    "Les commandes disponibles sont !insta, !twitter, !uptime et !youtube"
+    "Les commandes disponibles sont !boutique, !insta, !twitter, !uptime et !youtube"
 };
 
 // Valid commands start with:
@@ -74,7 +81,28 @@ const opts = {
 
 // These are the commands the bot knows (defined below):
 //  tips, palier, twitter, insta
-const knownCommands = { youtube, insta, twitter, uptime, serveur, commands };
+const knownCommands = {
+  youtube,
+  insta,
+  twitter,
+  uptime,
+  serveur,
+  commands,
+  boutique
+};
+
+function boutique(target, context) {
+  const now = moment();
+  const channel = target.split("#");
+  const msg = boutiqueLink[channel[1]];
+  if (
+    (channel[1] === "collinsandkosuke" || channel[1] === "frozencrystal") &&
+    now.diff(commandHistory[channel[1]].commands, "seconds") >= 15
+  ) {
+    sendMessage(target, context, msg);
+    commandHistory[channel[1]].commands = now;
+  } else return;
+}
 
 function commands(target, context) {
   const now = moment();
