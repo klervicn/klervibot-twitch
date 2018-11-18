@@ -163,7 +163,7 @@ function uptime(target, context) {
           commandHistory[channel[1]].uptime = now;
         } else return;
       } else {
-        if (now.diff(commandHistory[channel[1]].uptime, "seconds") >= 15) {
+        if (now.diff(commandHistory[channel[1]].uptime, "seconds") >= 60) {
           sendMessage(
             target,
             context,
