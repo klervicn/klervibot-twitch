@@ -1,4 +1,6 @@
-const { oauth, clientId } = require("./config");
+const { oauth, clientId, connection } = require("./config");
+const pgp = require("pg-promise")();
+const db = pgp(connection);
 const fetch = require("node-fetch");
 const tmi = require("tmi.js");
 const moment = require("moment");
@@ -6,6 +8,7 @@ const oldPointer = moment("20000101");
 const commandHistory = {
   nayrulive: {
     commands: oldPointer,
+    coupe: oldPointer,
     twitter: oldPointer,
     youtube: oldPointer,
     insta: oldPointer,
@@ -82,6 +85,7 @@ const opts = {
 // These are the commands the bot knows (defined below):
 //  tips, palier, twitter, insta
 const knownCommands = {
+  coupe,
   youtube,
   insta,
   twitter,
@@ -108,10 +112,44 @@ function commands(target, context) {
   const now = moment();
   const channel = target.split("#");
   const msg = commandsAvailable[channel[1]];
+  db.any("SELECT * FROM house")
+    .then(function(data) {
+      console.log(data);
+      // success;
+    })
+    .catch(function(error) {
+      console.error(error);
+      // error;
+    });
 
   if (now.diff(commandHistory[channel[1]].commands, "seconds") >= 15) {
     sendMessage(target, context, msg);
     commandHistory[channel[1]].commands = now;
+  } else return;
+}
+
+function coupe(target, context) {
+  const now = moment();
+  const channel = target.split("#");
+
+  if (now.diff(commandHistory[channel[1]].commands, "seconds") >= 15) {
+    db.any("SELECT * FROM house")
+      .then(function(data) {
+        for (const house of data) {
+          sendMessage(
+            target,
+            context,
+            `${house.housename} : ${house.score} points`
+          );
+        }
+        commandHistory[channel[1]].commands = now;
+        // success;
+      })
+      .catch(function(error) {
+        console.error(error);
+        return;
+        // error;
+      });
   } else return;
 }
 
