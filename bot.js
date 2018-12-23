@@ -90,6 +90,7 @@ const knownCommands = {
   youtube,
   insta,
   twitter,
+  maison,
   uptime,
   serveur,
   commands,
@@ -152,6 +153,30 @@ function coupe(target, context) {
         // error;
       });
   } else return;
+}
+
+function maison(target, context) {
+  const { username } = context;
+  db.any('SELECT * FROM "user" WHERE username = $1', username).then(function(
+    data
+  ) {
+    console.log(data);
+    if (data.length === 0) {
+      sendMessage(
+        target,
+        context,
+        `Tu n'es dans aucune maison pour l'instant, ${username} !`
+      );
+    } else {
+      sendMessage(
+        target,
+        context,
+        `${username}, tu fais partie de la maison ${
+          data[0].housename
+        }, et tu as rapporté ${data[0].earned_points} points !`
+      );
+    }
+  });
 }
 
 function choixpeau(target, context) {
