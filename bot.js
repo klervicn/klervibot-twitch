@@ -85,6 +85,7 @@ const opts = {
 // These are the commands the bot knows (defined below):
 //  tips, palier, twitter, insta
 const knownCommands = {
+  choixpeau,
   coupe,
   youtube,
   insta,
@@ -151,6 +152,56 @@ function coupe(target, context) {
         // error;
       });
   } else return;
+}
+
+function choixpeau(target, context) {
+  /** If a user has already a house, don't run */
+  const { username } = context;
+  const role = context.mod || context.badges.subcriber === 1 ? "Mod" : "None";
+
+  db.any('SELECT * FROM "user" WHERE username = $1', username)
+    .then(function(data) {
+      if (data.length === 0) {
+        console.log("No record with this pseudo");
+        db.any("SELECT * FROM house")
+          .then(function(data) {
+            const randomHouse =
+              data[Math.floor(Math.random() * data.length)].housename;
+            console.log(randomHouse);
+
+            db.none(
+              'INSERT INTO "user"(username, housename, earned_points, role) VALUES($1, $2, $3, $4)',
+              [username, randomHouse, 0, role]
+            )
+              .then(() => {
+                sendMessage(
+                  target,
+                  context,
+                  `Le choixpeau a décidé... Ce sera... ${randomHouse} pour ${username} !`
+                );
+              })
+              .catch(error => {
+                console.error(error);
+              });
+          })
+          .catch(function(error) {
+            console.error(error);
+            // error;
+          });
+      } else {
+        console.log("Record found !");
+        sendMessage(
+          target,
+          context,
+          `Bien tenté ${username}, mais le choix du Choixpeau est définitif !`
+        );
+      }
+    })
+    .catch(function(error) {
+      console.error(error);
+      return;
+      // error;
+    });
 }
 
 function youtube(target, context) {
