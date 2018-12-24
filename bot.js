@@ -249,6 +249,7 @@ function insta(target, context) {
   if (now.diff(commandHistory[channel[1]].insta, "seconds") >= 15) {
     sendMessage(target, context, msg);
     commandHistory[channel[1]].insta = now;
+    console.log(target, context);
   } else return;
 }
 
@@ -347,6 +348,44 @@ client.on("connected", (adress, port) => {
       ", port : " +
       port
   );
+});
+
+client.on("subscription", function(channel, username) {
+  if (channel === "nayrulive") {
+    db.any('SELECT * FROM "user" WHERE username = $1', username).then(function(
+      data
+    ) {
+      if (data.length === 0) {
+        return;
+      } else {
+        db.tx(t => {
+          // creating a sequence of transaction queries:
+          const { housename } = data;
+          const q1 = t.none(
+            'UPDATE "user" SET earned_points = earned_points + 10 where username = $1',
+            [username]
+          );
+          const q2 = t.none(
+            "UPDATE house SET score = score + 10 where housename = $1",
+            [housename]
+          );
+
+          // returning a promise that determines a successful transaction:
+          return t.batch([q1, q2]); // all of the queries are to be resolved;
+        })
+          .then(data => {
+            // success, COMMIT was executed
+            const msg = `Bien joué ${username}, tu viens de faire gagner 10 points à ${housename}`;
+            // Will not work I think unless I find a way to get target & context here
+            sendMessage(target, context, msg);
+          })
+          .catch(error => {
+            // failure, ROLLBACK was executed
+            console.error(error);
+          });
+      }
+    });
+  } else return;
 });
 
 // Called every time a message comes in:
