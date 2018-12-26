@@ -376,8 +376,7 @@ client.on("subscription", function(channel, username) {
           .then(data => {
             // success, COMMIT was executed
             const msg = `Bien joué ${username}, tu viens de faire gagner 10 points à ${housename}`;
-            // Will not work I think unless I find a way to get target & context here
-            sendMessage(target, context, msg);
+            client.say(channel, msg);
           })
           .catch(error => {
             // failure, ROLLBACK was executed
