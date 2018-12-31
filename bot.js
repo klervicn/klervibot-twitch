@@ -1,4 +1,15 @@
-const { oauth, clientId, connection } = require("./config");
+const {
+  oauth,
+  clientId,
+  connection,
+  shopLink,
+  youtubeLink,
+  instaLink,
+  twitterLink,
+  commandsAvailable,
+  channels
+} = require("./config");
+const { timeDiff } = require("./functions");
 const pgp = require("pg-promise")();
 const db = pgp(connection);
 const fetch = require("node-fetch");
@@ -33,41 +44,6 @@ const commandHistory = {
   }
 };
 
-const boutiqueLink = {
-  collinsandkosuke: `La boutique de vêtement de C&K, c'est par ici : https://teespring.com/stores/collinskosuke`,
-  frozencrystal: `Y'a de chouettes choses à acheter par là : https://teespring.com/stores/frozencrystalshop`
-};
-
-const youtubeLink = {
-  nayrulive: "https://www.youtube.com/c/Nayru",
-  collinsandkosuke: "https://www.youtube.com/collinskosuke",
-  frozencrystal: "https://www.youtube.com/user/teddymint3"
-};
-
-const instaLink = {
-  nayrulive: "https://www.instagram.com/nayrutv/",
-  collinsandkosuke: "https://www.instagram.com/collinskosuke/",
-  frozencrystal: "https://www.instagram.com/_frozencrystal/"
-};
-
-const twitterLink = {
-  nayrulive: "https://twitter.com/Nayruuu",
-  collinsandkosuke: "https://twitter.com/CollinsKosuke",
-  frozencrystal: "https://twitter.com/frozencrystal"
-};
-
-const commandsAvailable = {
-  nayrulive:
-    "Les commandes disponibles sont !insta, !twitter, !uptime et !youtube",
-  collinsandkosuke:
-    "Les commandes disponibles sont !boutique, !insta, !serveur, !twitter, !uptime et !youtube",
-  frozencrystal:
-    "Les commandes disponibles sont !boutique, !insta, !twitter, !uptime et !youtube"
-};
-
-// Valid commands start with:
-const commandPrefix = "!";
-// Define configuration options:
 const opts = {
   options: {
     debug: true
@@ -79,10 +55,14 @@ const opts = {
     username: "klervibot",
     password: "oauth:" + oauth
   },
-  channels: ["nayrulive", "collinsandkosuke", "frozencrystal"]
+  channels: channels
 };
 
-// These are the commands the bot knows (defined below):
+// Valid commands start with:
+const commandPrefix = "!";
+// Define configuration options:
+
+// These are the commands the bot knows (defined below), add each new command here:
 //  tips, palier, twitter, insta
 const knownCommands = {
   choixpeau,
@@ -97,44 +77,195 @@ const knownCommands = {
   boutique
 };
 
-function boutique(target, context) {
-  const now = moment();
-  const channel = target.split("#");
-  const msg = boutiqueLink[channel[1]];
-  if (
-    (channel[1] === "collinsandkosuke" || channel[1] === "frozencrystal") &&
-    now.diff(commandHistory[channel[1]].commands, "seconds") >= 15
-  ) {
-    sendMessage(target, context, msg);
-    commandHistory[channel[1]].commands = now;
-  } else return;
-}
+/**
+ * Commands
+ * Some commands are only available for some channels.
+ */
+
+/**
+ * Return the list of commands available for the channel
+ * @param {*} target
+ * @param {*} context
+ */
 
 function commands(target, context) {
   const now = moment();
   const channel = target.split("#");
   const msg = commandsAvailable[channel[1]];
-  db.any("SELECT * FROM house")
-    .then(function(data) {
-      console.log(data);
-      // success;
-    })
-    .catch(function(error) {
-      console.error(error);
-      // error;
-    });
-
-  if (now.diff(commandHistory[channel[1]].commands, "seconds") >= 15) {
+  if (timeDiff(now, commandHistory[channel[1]].commands)) {
     sendMessage(target, context, msg);
     commandHistory[channel[1]].commands = now;
   } else return;
 }
 
+/**
+ * Returns the link of the shop for the channel
+ * @param {*} target
+ * @param {*} context
+ */
+
+function boutique(target, context) {
+  if (channel[1] !== "collinsandkosuke" || channel[1] !== "frozencrystal") {
+    return;
+  }
+  const now = moment();
+  const channel = target.split("#");
+  const msg = shopLink[channel[1]];
+  if (timeDiff(now, commandHistory[channel[1]].commands)) {
+    sendMessage(target, context, msg);
+    commandHistory[channel[1]].commands = now;
+  } else return;
+}
+
+/**
+ * Returns the link of the Youtube page for the channel
+ *
+ * @param {*} target
+ * @param {*} context
+ */
+
+function youtube(target, context) {
+  const now = moment();
+  const channel = target.split("#");
+  const msg =
+    "Pour nous rejoindre sur YouTube, c'est par ici : " +
+    youtubeLink[channel[1]];
+
+  if (timeDiff(now, commandHistory[channel[1]].youtube)) {
+    sendMessage(target, context, msg);
+    commandHistory[channel[1]].youtube = now;
+  } else return;
+}
+
+/**
+ * Returns the link of the Instagram profile of the channel
+ *
+ * @param {*} target
+ * @param {*} context
+ */
+function insta(target, context) {
+  const now = moment();
+  const channel = target.split("#");
+  const msg = "Les jolies photos, c'est par là : " + instaLink[channel[1]];
+  if (timeDiff(now, channel[1].insta)) {
+    sendMessage(target, context, msg);
+    commandHistory[channel[1]].insta = now;
+    console.log(target, context);
+  } else return;
+}
+
+/**
+ * Returns the link of the server for the channel
+ *
+ * @param {*} target
+ * @param {*} context
+ */
+
+function serveur(target, context) {
+  if (channel[1] !== "collinsandkosuke") {
+    return;
+  }
+  const now = moment();
+  const channel = target.split("#");
+  const msg =
+    "C&K jouent sur un serveur privé VeryGames. Si tu es intéressé, voici le lien pour louer un serveur : https://www.verygames.net/fr !";
+  if (timeDiff(now, commandHistory[channel[1]].server)) {
+    sendMessage(target, context, msg);
+    commandHistory[channel[1]].server = now;
+  } else return;
+}
+
+/**
+ * Returns the link of the Twitter account of the channel
+ *
+ * @param {*} target
+ * @param {*} context
+ */
+
+function twitter(target, context) {
+  const now = moment();
+  const channel = target.split("#");
+  const msg = "Pour être au courant de tout : " + twitterLink[channel[1]];
+  if (timeDiff(now, commandHistory[channel[1]].twitter)) {
+    sendMessage(target, context, msg);
+    commandHistory[channel[1]].twitter = now;
+  } else return;
+}
+
+/**
+ * Returns the uptime of the current stream
+ *
+ * @param {*} target
+ * @param {*} context
+ */
+
+function uptime(target, context) {
+  const channel = target.split("#");
+  const now = moment();
+
+  fetch(`https://api.twitch.tv/helix/streams?user_login=${channel[1]}`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json", "Client-ID": clientId }
+  })
+    .then(res => res.json())
+    .then(json => {
+      if (json.data[0]) {
+        if (timeDiff(now, commandHistory[channel[1]].uptime, 60)) {
+          const diff = now.diff(json.data[0].started_at);
+          const diffDuration = moment.duration(diff);
+          const diffHours = diffDuration.hours();
+          const diffMinutes = diffDuration.minutes();
+          const mess =
+            diffHours > 0
+              ? `Le stream de ${
+                  channel[1]
+                } a commencé il y a ${diffHours} heure(s) et ${diffMinutes} minute(s)`
+              : `Le stream de ${
+                  channel[1]
+                } a commencé il y a ${diffMinutes} minute(s)`;
+
+          sendMessage(target, context, mess);
+          commandHistory[channel[1]].uptime = now;
+        } else return;
+      } else {
+        if (timeDiff(now, commandHistory[channel[1]].uptime, 60)) {
+          sendMessage(
+            target,
+            context,
+            `${
+              channel[1]
+            } n'est pas en live actuellement, mais vous pouvez suivre la chaîne pour être notifié lors des prochains streams !`
+          );
+          commandHistory[channel[1]].uptime = now;
+        } else return;
+      }
+    });
+}
+
+/**
+ *
+ * Hogwarts house cup module, only for NayruLive
+ *
+ *
+ *
+ */
+
+/**
+ * Returns scoreboard
+ *
+ * @param {*} target
+ * @param {*} context
+ */
+
 function coupe(target, context) {
+  if (channel[1] !== "nayrulive") {
+    return;
+  }
+
   const now = moment();
   const channel = target.split("#");
 
-  if (now.diff(commandHistory[channel[1]].commands, "seconds") >= 15) {
+  if (timeDiff(now, commandHistory[channel[1]].coupe)) {
     db.any("SELECT * FROM house")
       .then(function(data) {
         for (const house of data) {
@@ -145,17 +276,25 @@ function coupe(target, context) {
           );
         }
         commandHistory[channel[1]].commands = now;
-        // success;
       })
       .catch(function(error) {
         console.error(error);
         return;
-        // error;
       });
   } else return;
 }
 
+/**
+ * Returns user house
+ *
+ * @param {*} target
+ * @param {*} context
+ */
+
 function maison(target, context) {
+  if (channel[1] !== "nayrulive") {
+    return;
+  }
   const { username } = context;
   db.any('SELECT * FROM "user" WHERE username = $1', username).then(function(
     data
@@ -179,10 +318,21 @@ function maison(target, context) {
   });
 }
 
+/**
+ * Randomly place a user in a house
+ *
+ * @param {*} target
+ * @param {*} context
+ */
+
 function choixpeau(target, context) {
+  if (channel[1] !== "nayrulive") {
+    return;
+  }
+
   /** If a user has already a house, don't run */
   const { username } = context;
-  const role = context.mod || context.badges.subcriber === 1 ? "Mod" : "None";
+  const role = context.mod || context.badges.broadcaster === 1 ? "Mod" : "None";
 
   db.any('SELECT * FROM "user" WHERE username = $1', username)
     .then(function(data) {
@@ -229,97 +379,6 @@ function choixpeau(target, context) {
     });
 }
 
-function youtube(target, context) {
-  const now = moment();
-  const channel = target.split("#");
-  const msg =
-    "Pour nous rejoindre sur YouTube, c'est par ici : " +
-    youtubeLink[channel[1]];
-
-  if (now.diff(commandHistory[channel[1]].youtube, "seconds") >= 15) {
-    sendMessage(target, context, msg);
-    commandHistory[channel[1]].youtube = now;
-  } else return;
-}
-
-function insta(target, context) {
-  const now = moment();
-  const channel = target.split("#");
-  const msg = "Les jolies photos, c'est par là : " + instaLink[channel[1]];
-  if (now.diff(commandHistory[channel[1]].insta, "seconds") >= 15) {
-    sendMessage(target, context, msg);
-    commandHistory[channel[1]].insta = now;
-    console.log(target, context);
-  } else return;
-}
-
-function serveur(target, context) {
-  const now = moment();
-  const channel = target.split("#");
-  const msg =
-    "C&K jouent sur un serveur privé VeryGames. Si tu es intéressé, voici le lien pour louer un serveur : https://www.verygames.net/fr !";
-  if (
-    channel[1] === "collinsandkosuke" &&
-    now.diff(commandHistory[channel[1]].server, "seconds") >= 15
-  ) {
-    sendMessage(target, context, msg);
-    commandHistory[channel[1]].server = now;
-  } else return;
-}
-
-function twitter(target, context) {
-  const now = moment();
-  const channel = target.split("#");
-  const msg = "Pour être au courant de tout : " + twitterLink[channel[1]];
-  if (now.diff(commandHistory[channel[1]].twitter, "seconds") >= 15) {
-    sendMessage(target, context, msg);
-    commandHistory[channel[1]].twitter = now;
-  } else return;
-}
-
-function uptime(target, context) {
-  const channel = target.split("#");
-  const now = moment();
-
-  fetch(`https://api.twitch.tv/helix/streams?user_login=${channel[1]}`, {
-    method: "GET",
-    headers: { "Content-Type": "application/json", "Client-ID": clientId }
-  })
-    .then(res => res.json())
-    .then(json => {
-      if (json.data[0]) {
-        if (now.diff(commandHistory[channel[1]].uptime, "seconds") >= 15) {
-          const diff = now.diff(json.data[0].started_at);
-          const diffDuration = moment.duration(diff);
-          const diffHours = diffDuration.hours();
-          const diffMinutes = diffDuration.minutes();
-          const mess =
-            diffHours > 0
-              ? `Le stream de ${
-                  channel[1]
-                } a commencé il y a ${diffHours} heure(s) et ${diffMinutes} minute(s)`
-              : `Le stream de ${
-                  channel[1]
-                } a commencé il y a ${diffMinutes} minute(s)`;
-
-          sendMessage(target, context, mess);
-          commandHistory[channel[1]].uptime = now;
-        } else return;
-      } else {
-        if (now.diff(commandHistory[channel[1]].uptime, "seconds") >= 60) {
-          sendMessage(
-            target,
-            context,
-            `${
-              channel[1]
-            } n'est pas en live actuellement, mais vous pouvez suivre la chaîne pour être notifié lors des prochains streams !`
-          );
-          commandHistory[channel[1]].uptime = now;
-        } else return;
-      }
-    });
-}
-
 // Helper function to send the correct type of message:
 function sendMessage(target, context, message) {
   if (context["message-type"] === "whisper") {
@@ -349,6 +408,11 @@ client.on("connected", (adress, port) => {
       port
   );
 });
+
+/**
+ * Give points to an user when he subscribes, only if he is placed in a house
+ *
+ */
 
 client.on("subscription", function(channel, username) {
   if (channel === "nayrulive") {
