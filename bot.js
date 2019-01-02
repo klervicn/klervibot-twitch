@@ -7,9 +7,16 @@ const {
   instaLink,
   twitterLink,
   commandsAvailable,
-  channels
+  channelsJoined
 } = require("./config");
 const { timeDiff } = require("./functions");
+const {
+  selectSpecificUserQuery,
+  selectAllHousesQuery,
+  createUserQuery,
+  addPointsToUserQuery,
+  addPointsToHouseQuery
+} = require("./sqlQueries");
 const pgp = require("pg-promise")();
 const db = pgp(connection);
 const fetch = require("node-fetch");
@@ -55,7 +62,7 @@ const opts = {
     username: "klervibot",
     password: "oauth:" + oauth
   },
-  channels: channels
+  channels: channelsJoined
 };
 
 // Valid commands start with:
@@ -258,15 +265,13 @@ function uptime(target, context) {
  */
 
 function coupe(target, context) {
+  const now = moment();
+  const channel = target.split("#");
   if (channel[1] !== "nayrulive") {
     return;
   }
-
-  const now = moment();
-  const channel = target.split("#");
-
   if (timeDiff(now, commandHistory[channel[1]].coupe)) {
-    db.any("SELECT * FROM house")
+    db.any(selectAllHousesQuery)
       .then(function(data) {
         for (const house of data) {
           sendMessage(
@@ -292,13 +297,12 @@ function coupe(target, context) {
  */
 
 function maison(target, context) {
+  const channel = target.split("#");
   if (channel[1] !== "nayrulive") {
     return;
   }
   const { username } = context;
-  db.any('SELECT * FROM "user" WHERE username = $1', username).then(function(
-    data
-  ) {
+  db.any(selectSpecificUserQuery, username).then(function(data) {
     console.log(data);
     if (data.length === 0) {
       sendMessage(
@@ -326,6 +330,7 @@ function maison(target, context) {
  */
 
 function choixpeau(target, context) {
+  const channel = target.split("#");
   if (channel[1] !== "nayrulive") {
     return;
   }
@@ -334,20 +339,17 @@ function choixpeau(target, context) {
   const { username } = context;
   const role = context.mod || context.badges.broadcaster === 1 ? "Mod" : "None";
 
-  db.any('SELECT * FROM "user" WHERE username = $1', username)
+  db.any(selectSpecificUserQuery, username)
     .then(function(data) {
       if (data.length === 0) {
         console.log("No record with this pseudo");
-        db.any("SELECT * FROM house")
+        db.any(selectAllHousesQuery)
           .then(function(data) {
             const randomHouse =
               data[Math.floor(Math.random() * data.length)].housename;
             console.log(randomHouse);
 
-            db.none(
-              'INSERT INTO "user"(username, housename, earned_points, role) VALUES($1, $2, $3, $4)',
-              [username, randomHouse, 0, role]
-            )
+            db.none(createUserQuery, [username, randomHouse, 0, role])
               .then(() => {
                 sendMessage(
                   target,
@@ -416,23 +418,15 @@ client.on("connected", (adress, port) => {
 
 client.on("subscription", function(channel, username) {
   if (channel === "nayrulive") {
-    db.any('SELECT * FROM "user" WHERE username = $1', username).then(function(
-      data
-    ) {
+    db.any(selectSpecificUserQuery, username).then(function(data) {
       if (data.length === 0) {
         return;
       } else {
         db.tx(t => {
           // creating a sequence of transaction queries:
           const { housename } = data;
-          const q1 = t.none(
-            'UPDATE "user" SET earned_points = earned_points + 10 where username = $1',
-            [username]
-          );
-          const q2 = t.none(
-            "UPDATE house SET score = score + 10 where housename = $1",
-            [housename]
-          );
+          const q1 = t.none(addPointsToUserQuery, [10, username]);
+          const q2 = t.none(addPointsToHouseQuery, [10, housename]);
 
           // returning a promise that determines a successful transaction:
           return t.batch([q1, q2]); // all of the queries are to be resolved;
