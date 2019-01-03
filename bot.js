@@ -15,7 +15,10 @@ const {
   selectAllHousesQuery,
   createUserQuery,
   addPointsToUserQuery,
-  addPointsToHouseQuery
+  addPointsToHouseQuery,
+  selectRoleFromSpecificUserQuery,
+  removePointsToUserQuery,
+  removePointsToHouseQuery
 } = require("./sqlQueries");
 const pgp = require("pg-promise")();
 const db = pgp(connection);
@@ -81,7 +84,9 @@ const knownCommands = {
   uptime,
   serveur,
   commands,
-  boutique
+  boutique,
+  give,
+  remove
 };
 
 /**
@@ -379,6 +384,83 @@ function choixpeau(target, context) {
       return;
       // error;
     });
+}
+
+function give(target, context, params, isAddition = true) {
+  const channel = target.split("#");
+
+  if (channel[1] !== "nayrulive" || params.length !== 2) {
+    return;
+  }
+  const { username } = context;
+  const targetUsername = params[0];
+  const nbPoints = params[1];
+
+  // Check if user is mod
+
+  db.any(selectRoleFromSpecificUserQuery, username).then(function(data) {
+    if (data.length === 0) {
+      client.say(
+        target,
+        "Participez à la cérémonie de répartition avec le !choixpeau avant de distribuer des points !"
+      );
+      return;
+    } else {
+      if (data[0].role !== "Mod") {
+        client.say(
+          target,
+          "Bien essayé, mais seuls les préfets peuvent donner des points"
+        );
+        return;
+      }
+      db.any(selectSpecificUserQuery, targetUsername).then(function(user) {
+        console.log(user);
+        if (user.length === 0) {
+          client.say(
+            target,
+            "Le sorcier que vous désignez n'est dans aucune maison pour le moment"
+          );
+          return;
+        } else {
+          const { housename } = user[0];
+          db.tx(t => {
+            // creating a sequence of transaction queries:
+
+            const q1 = t.none(
+              isAddition ? addPointsToUserQuery : removePointsToUserQuery,
+              [nbPoints, username]
+            );
+            const q2 = t.none(
+              isAddition ? addPointsToHouseQuery : removePointsToHouseQuery,
+              [nbPoints, housename]
+            );
+
+            // returning a promise that determines a successful transaction:
+            return t.batch([q1, q2]); // all of the queries are to be resolved;
+          })
+            .then(data => {
+              // success, COMMIT was executed
+              const msg = isAddition
+                ? `Bien joué ${targetUsername}, tu viens de faire gagner ${nbPoints} points à ${housename}`
+                : ` ${targetUsername}, tu viens de faire perdre ${nbPoints} points à ${housename}`;
+              client.say(channel, msg);
+            })
+            .catch(error => {
+              // failure, ROLLBACK was executed
+              console.error(error);
+            });
+        }
+      });
+    }
+  });
+}
+
+function remove(target, context, params) {
+  const channel = target.split("#");
+  if (channel[1] !== "nayrulive") {
+    return;
+  }
+  give(target, context, params, false);
 }
 
 // Helper function to send the correct type of message:

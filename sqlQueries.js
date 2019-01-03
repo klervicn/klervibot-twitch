@@ -6,5 +6,11 @@ module.exports = {
   addPointsToUserQuery:
     'UPDATE "user" SET earned_points = earned_points + $1 where username = $2',
   addPointsToHouseQuery:
-    "UPDATE house SET score = score + $1 where housename = $2"
+    "UPDATE house SET score = score + $1 where housename = $2",
+  selectRoleFromSpecificUserQuery:
+    'SELECT "role" FROM "user" WHERE username = $1',
+  removePointsToUserQuery:
+    'UPDATE "user" SET earned_points = earned_points - $1 where username = $2',
+  removePointsToHouseQuery:
+    "UPDATE house SET score = score - $1 where housename = $2"
 };
