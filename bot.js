@@ -428,22 +428,22 @@ function give(target, context, params, isAddition = true) {
 
             const q1 = t.none(
               isAddition ? addPointsToUserQuery : removePointsToUserQuery,
-              [nbPoints, username]
+              [parseInt(nbPoints), username]
             );
             const q2 = t.none(
               isAddition ? addPointsToHouseQuery : removePointsToHouseQuery,
-              [nbPoints, housename]
+              [parseInt(nbPoints), housename]
             );
 
             // returning a promise that determines a successful transaction:
             return t.batch([q1, q2]); // all of the queries are to be resolved;
           })
-            .then(data => {
+            .then(() => {
               // success, COMMIT was executed
               const msg = isAddition
                 ? `Bien joué ${targetUsername}, tu viens de faire gagner ${nbPoints} points à ${housename}`
                 : ` ${targetUsername}, tu viens de faire perdre ${nbPoints} points à ${housename}`;
-              client.say(channel, msg);
+              client.say(target, msg);
             })
             .catch(error => {
               // failure, ROLLBACK was executed
