@@ -33,6 +33,7 @@ const commandHistory = {
     coupe: oldPointer,
     give: oldPointer,
     insta: oldPointer,
+    maison: oldPointer,
     remove: oldPointer,
     twitter: oldPointer,
     uptime: oldPointer,
@@ -100,7 +101,6 @@ const knownCommands = {
 /**
  * Return the list of commands available for the channel
  * @param {*} target
- * @param {*} context
  */
 
 function commands(target) {
@@ -116,7 +116,6 @@ function commands(target) {
 /**
  * Returns the link of the shop for the channel
  * @param {*} target
- * @param {*} context
  */
 
 function boutique(target) {
@@ -136,7 +135,6 @@ function boutique(target) {
  * Returns the link of the Youtube page for the channel
  *
  * @param {*} target
- * @param {*} context
  */
 
 function youtube(target) {
@@ -156,9 +154,9 @@ function youtube(target) {
  * Returns the link of the Instagram profile of the channel
  *
  * @param {*} target
- * @param {*} context
  */
-function insta(target, context) {
+
+function insta(target) {
   const now = moment();
   const channel = target.split("#");
   const msg = "Les jolies photos, c'est par là : " + instaLink[channel[1]];
@@ -172,10 +170,9 @@ function insta(target, context) {
  * Returns the link of the server for the channel
  *
  * @param {*} target
- * @param {*} context
  */
 
-function serveur(target, context) {
+function serveur(target) {
   if (channel[1] !== "collinsandkosuke") {
     return;
   }
@@ -193,7 +190,6 @@ function serveur(target, context) {
  * Returns the link of the Twitter account of the channel
  *
  * @param {*} target
- * @param {*} context
  */
 
 function twitter(target) {
@@ -210,7 +206,6 @@ function twitter(target) {
  * Returns the uptime of the current stream
  *
  * @param {*} target
- * @param {*} context
  */
 
 function uptime(target) {
@@ -267,28 +262,26 @@ function uptime(target) {
  * Returns scoreboard
  *
  * @param {*} target
- * @param {*} context
  */
 
-function coupe(target) {
-  const now = moment();
-  const channel = target.split("#");
-  if (channel[1] !== "nayrulive") {
-    return;
+async function coupe(target) {
+  try {
+    const now = moment();
+    const channel = target.split("#");
+    if (channel[1] !== "nayrulive") {
+      return;
+    }
+    if (timeDiff(now, commandHistory[channel[1]].coupe)) {
+      const houses = await db.any(selectAllHousesQuery);
+      for (const house of houses) {
+        client.say(target, `${house.housename} : ${house.score} points`);
+      }
+      commandHistory[channel[1]].coupe = now;
+    } else return;
+  } catch (error) {
+    console.error(error);
+    throw error;
   }
-  if (timeDiff(now, commandHistory[channel[1]].coupe)) {
-    db.any(selectAllHousesQuery)
-      .then(function(data) {
-        for (const house of data) {
-          client.say(target, `${house.housename} : ${house.score} points`);
-        }
-        commandHistory[channel[1]].coupe = now;
-      })
-      .catch(function(error) {
-        console.error(error);
-        return;
-      });
-  } else return;
 }
 
 /**
@@ -296,34 +289,40 @@ function coupe(target) {
  *
  * @param {*} target
  * @param {*} context
+ * @param {*} params
  */
 
-function maison(target, context, params) {
-  const channel = target.split("#");
-  const now = moment();
-  if (channel[1] !== "nayrulive") {
-    return;
-  }
-
-  if (timeDiff(now, commandHistory[channel[1]].maison)) {
-    const username = params.length > 0 ? params[0] : context.username;
-    db.any(selectSpecificUserQuery, username).then(function(data) {
-      if (data.length === 0) {
+async function maison(target, context, params) {
+  try {
+    const channel = target.split("#");
+    const now = moment();
+    if (channel[1] !== "nayrulive") {
+      return;
+    }
+    if (timeDiff(now, commandHistory[channel[1]].maison)) {
+      const username =
+        params.length > 0 ? params[0].toLowerCase() : context.username;
+      const user = await db.oneOrNone(selectSpecificUserQuery, username);
+      if (user === null) {
         client.say(
           target,
           `${username} n'est dans aucune maison pour l'instant !`
         );
       } else {
+        console.log(target);
         client.say(
           target,
           `${username} fait partie de la maison ${
-            data[0].housename
-          }, et a rapporté ${data[0].earned_points} points !`
+            user.housename
+          }, et a rapporté ${user.earned_points} points !`
         );
       }
-    });
-    commandHistory[channel[1]].maison = now;
-  } else return;
+      commandHistory[channel[1]].maison = now;
+    } else return;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
 }
 
 /**
@@ -348,10 +347,10 @@ async function choixpeau(target, context) {
         context.mod || context.badges.broadcaster === 1 ? "Mod" : "None";
 
       const user = await db.oneOrNone(selectSpecificUserQuery, username);
-      if (user.length === 0) {
+      if (user === null) {
         const houses = await db.any(selectAllHousesQuery);
         const randomHouse =
-          data[Math.floor(Math.random() * houses.length)].housename;
+          houses[Math.floor(Math.random() * houses.length)].housename;
         console.log(randomHouse);
         await db.none(createUserQuery, [username, randomHouse, 0, role]);
         client.say(
@@ -392,35 +391,43 @@ async function give(target, context, params, isAddition = true) {
     }
     if (timeDiff(now, commandHistory[channel[1]].give, 10)) {
       const { username } = context;
-      const targetUsername = params[0];
+      const targetUsername = params[0].toLowerCase();
       const nbPoints = parseInt(params[1]);
 
       // Check if user is mod
 
-      const role = db.oneOrNone(selectRoleFromSpecificUserQuery, username);
-      if (role.length === 0) {
+      const role = await db.oneOrNone(
+        selectRoleFromSpecificUserQuery,
+        username
+      );
+      console.log(role);
+
+      if (role === null) {
         client.say(
           target,
           "Participez à la cérémonie de répartition avec le !choixpeau avant de distribuer des points !"
         );
         return;
       } else {
-        if (role !== "Mod") {
+        if (role.role !== "Mod") {
           client.say(
             target,
             "Bien essayé, mais seuls les préfets peuvent donner des points"
           );
           return;
         }
-        const user = db.oneOrNone(selectSpecificUserQuery, targetUsername);
-        if (user.length === 0) {
+        const user = await db.oneOrNone(
+          selectSpecificUserQuery,
+          targetUsername
+        );
+        if (user === null) {
           client.say(
             target,
             "Le sorcier que vous désignez n'est dans aucune maison pour le moment"
           );
           return;
         } else {
-          const { housename, earned_points } = user[0];
+          const { housename, earned_points } = user;
           if (earned_points - nbPoints < 0 && !isAddition) {
             client.say(
               target,
