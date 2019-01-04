@@ -344,7 +344,11 @@ async function choixpeau(target, context) {
       /** If a user has already a house, don't run */
       const { username } = context;
       const role =
-        context.mod || context.badges.broadcaster === 1 ? "Mod" : "None";
+        context.badges === null ||
+        context.mod ||
+        context.badges.broadcaster === 1
+          ? "Mod"
+          : "None";
 
       const user = await db.oneOrNone(selectSpecificUserQuery, username);
       if (user === null) {
