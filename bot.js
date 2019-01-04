@@ -344,8 +344,8 @@ async function choixpeau(target, context) {
       /** If a user has already a house, don't run */
       const { username } = context;
       const role =
-        context.badges !== null &&
-        (context.mod || context.badges.broadcaster === 1)
+        context.mod ||
+        (context.badges !== null && context.badges.broadcaster === 1)
           ? "Mod"
           : "None";
 
