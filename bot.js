@@ -9,7 +9,7 @@ const {
   commandsAvailable,
   channelsJoined
 } = require("./config");
-const { timeDiff } = require("./functions");
+const { timeDiff } = require("./utils");
 const {
   selectSpecificUserQuery,
   selectAllHousesQuery,
@@ -28,12 +28,15 @@ const moment = require("moment");
 const oldPointer = moment("20000101");
 const commandHistory = {
   nayrulive: {
+    choixpeau: oldPointer,
     commands: oldPointer,
     coupe: oldPointer,
-    twitter: oldPointer,
-    youtube: oldPointer,
+    give: oldPointer,
     insta: oldPointer,
-    uptime: oldPointer
+    remove: oldPointer,
+    twitter: oldPointer,
+    uptime: oldPointer,
+    youtube: oldPointer
   },
   frozencrystal: {
     boutique: oldPointer,
@@ -100,12 +103,12 @@ const knownCommands = {
  * @param {*} context
  */
 
-function commands(target, context) {
+function commands(target) {
   const now = moment();
   const channel = target.split("#");
   const msg = commandsAvailable[channel[1]];
   if (timeDiff(now, commandHistory[channel[1]].commands)) {
-    sendMessage(target, context, msg);
+    client.say(target, msg);
     commandHistory[channel[1]].commands = now;
   } else return;
 }
@@ -116,7 +119,7 @@ function commands(target, context) {
  * @param {*} context
  */
 
-function boutique(target, context) {
+function boutique(target) {
   if (channel[1] !== "collinsandkosuke" || channel[1] !== "frozencrystal") {
     return;
   }
@@ -124,7 +127,7 @@ function boutique(target, context) {
   const channel = target.split("#");
   const msg = shopLink[channel[1]];
   if (timeDiff(now, commandHistory[channel[1]].commands)) {
-    sendMessage(target, context, msg);
+    client.say(target, msg);
     commandHistory[channel[1]].commands = now;
   } else return;
 }
@@ -136,7 +139,7 @@ function boutique(target, context) {
  * @param {*} context
  */
 
-function youtube(target, context) {
+function youtube(target) {
   const now = moment();
   const channel = target.split("#");
   const msg =
@@ -144,7 +147,7 @@ function youtube(target, context) {
     youtubeLink[channel[1]];
 
   if (timeDiff(now, commandHistory[channel[1]].youtube)) {
-    sendMessage(target, context, msg);
+    client.say(target, msg);
     commandHistory[channel[1]].youtube = now;
   } else return;
 }
@@ -160,9 +163,8 @@ function insta(target, context) {
   const channel = target.split("#");
   const msg = "Les jolies photos, c'est par là : " + instaLink[channel[1]];
   if (timeDiff(now, channel[1].insta)) {
-    sendMessage(target, context, msg);
+    client.say(target, msg);
     commandHistory[channel[1]].insta = now;
-    console.log(target, context);
   } else return;
 }
 
@@ -182,7 +184,7 @@ function serveur(target, context) {
   const msg =
     "C&K jouent sur un serveur privé VeryGames. Si tu es intéressé, voici le lien pour louer un serveur : https://www.verygames.net/fr !";
   if (timeDiff(now, commandHistory[channel[1]].server)) {
-    sendMessage(target, context, msg);
+    client.say(target, msg);
     commandHistory[channel[1]].server = now;
   } else return;
 }
@@ -194,12 +196,12 @@ function serveur(target, context) {
  * @param {*} context
  */
 
-function twitter(target, context) {
+function twitter(target) {
   const now = moment();
   const channel = target.split("#");
   const msg = "Pour être au courant de tout : " + twitterLink[channel[1]];
   if (timeDiff(now, commandHistory[channel[1]].twitter)) {
-    sendMessage(target, context, msg);
+    client.say(target, msg);
     commandHistory[channel[1]].twitter = now;
   } else return;
 }
@@ -211,7 +213,7 @@ function twitter(target, context) {
  * @param {*} context
  */
 
-function uptime(target, context) {
+function uptime(target) {
   const channel = target.split("#");
   const now = moment();
 
@@ -236,14 +238,13 @@ function uptime(target, context) {
                   channel[1]
                 } a commencé il y a ${diffMinutes} minute(s)`;
 
-          sendMessage(target, context, mess);
+          client.say(target, mess);
           commandHistory[channel[1]].uptime = now;
         } else return;
       } else {
         if (timeDiff(now, commandHistory[channel[1]].uptime, 60)) {
-          sendMessage(
+          client.say(
             target,
-            context,
             `${
               channel[1]
             } n'est pas en live actuellement, mais vous pouvez suivre la chaîne pour être notifié lors des prochains streams !`
@@ -269,7 +270,7 @@ function uptime(target, context) {
  * @param {*} context
  */
 
-function coupe(target, context) {
+function coupe(target) {
   const now = moment();
   const channel = target.split("#");
   if (channel[1] !== "nayrulive") {
@@ -279,13 +280,9 @@ function coupe(target, context) {
     db.any(selectAllHousesQuery)
       .then(function(data) {
         for (const house of data) {
-          sendMessage(
-            target,
-            context,
-            `${house.housename} : ${house.score} points`
-          );
+          client.say(target, `${house.housename} : ${house.score} points`);
         }
-        commandHistory[channel[1]].commands = now;
+        commandHistory[channel[1]].coupe = now;
       })
       .catch(function(error) {
         console.error(error);
@@ -301,30 +298,32 @@ function coupe(target, context) {
  * @param {*} context
  */
 
-function maison(target, context) {
+function maison(target, context, params) {
   const channel = target.split("#");
+  const now = moment();
   if (channel[1] !== "nayrulive") {
     return;
   }
-  const { username } = context;
-  db.any(selectSpecificUserQuery, username).then(function(data) {
-    console.log(data);
-    if (data.length === 0) {
-      sendMessage(
-        target,
-        context,
-        `Tu n'es dans aucune maison pour l'instant, ${username} !`
-      );
-    } else {
-      sendMessage(
-        target,
-        context,
-        `${username}, tu fais partie de la maison ${
-          data[0].housename
-        }, et tu as rapporté ${data[0].earned_points} points !`
-      );
-    }
-  });
+
+  if (timeDiff(now, commandHistory[channel[1]].maison)) {
+    const username = params.length > 0 ? params[0] : context.username;
+    db.any(selectSpecificUserQuery, username).then(function(data) {
+      if (data.length === 0) {
+        client.say(
+          target,
+          `${username} n'est dans aucune maison pour l'instant !`
+        );
+      } else {
+        client.say(
+          target,
+          `${username} fait partie de la maison ${
+            data[0].housename
+          }, et a rapporté ${data[0].earned_points} points !`
+        );
+      }
+    });
+    commandHistory[channel[1]].maison = now;
+  } else return;
 }
 
 /**
@@ -334,87 +333,86 @@ function maison(target, context) {
  * @param {*} context
  */
 
-function choixpeau(target, context) {
-  const channel = target.split("#");
-  if (channel[1] !== "nayrulive") {
-    return;
-  }
+async function choixpeau(target, context) {
+  try {
+    const now = moment();
+    const channel = target.split("#");
+    if (channel[1] !== "nayrulive") {
+      return;
+    }
 
-  /** If a user has already a house, don't run */
-  const { username } = context;
-  const role = context.mod || context.badges.broadcaster === 1 ? "Mod" : "None";
+    if (timeDiff(now, commandHistory[channel[1]].choixpeau, 10)) {
+      /** If a user has already a house, don't run */
+      const { username } = context;
+      const role =
+        context.mod || context.badges.broadcaster === 1 ? "Mod" : "None";
 
-  db.any(selectSpecificUserQuery, username)
-    .then(function(data) {
-      if (data.length === 0) {
-        console.log("No record with this pseudo");
-        db.any(selectAllHousesQuery)
-          .then(function(data) {
-            const randomHouse =
-              data[Math.floor(Math.random() * data.length)].housename;
-            console.log(randomHouse);
-
-            db.none(createUserQuery, [username, randomHouse, 0, role])
-              .then(() => {
-                sendMessage(
-                  target,
-                  context,
-                  `Le choixpeau a décidé... Ce sera... ${randomHouse} pour ${username} !`
-                );
-              })
-              .catch(error => {
-                console.error(error);
-              });
-          })
-          .catch(function(error) {
-            console.error(error);
-            // error;
-          });
-      } else {
-        console.log("Record found !");
-        sendMessage(
+      const user = await db.oneOrNone(selectSpecificUserQuery, username);
+      if (user.length === 0) {
+        const houses = await db.any(selectAllHousesQuery);
+        const randomHouse =
+          data[Math.floor(Math.random() * houses.length)].housename;
+        console.log(randomHouse);
+        await db.none(createUserQuery, [username, randomHouse, 0, role]);
+        client.say(
           target,
-          context,
+          `Le choixpeau a décidé... Ce sera... ${randomHouse} pour ${username} !`
+        );
+      } else {
+        client.say(
+          target,
           `Bien tenté ${username}, mais le choix du Choixpeau est définitif !`
         );
       }
-    })
-    .catch(function(error) {
-      console.error(error);
-      return;
-      // error;
-    });
-}
-
-function give(target, context, params, isAddition = true) {
-  const channel = target.split("#");
-
-  if (channel[1] !== "nayrulive" || params.length !== 2) {
-    return;
+      commandHistory[channel[1]].choixpeau = now;
+    } else return;
+  } catch (error) {
+    console.error(error);
+    throw error;
   }
-  const { username } = context;
-  const targetUsername = params[0];
-  const nbPoints = params[1];
+}
+/**
+ *
+ * Give points to an user :
+ * !give <username> <points>
+ *
+ * @param {*} target
+ * @param {*} context
+ * @param {Array} params
+ * @param {Boolean} isAddition
+ */
 
-  // Check if user is mod
+async function give(target, context, params, isAddition = true) {
+  try {
+    const channel = target.split("#");
+    const now = moment();
 
-  db.any(selectRoleFromSpecificUserQuery, username).then(function(data) {
-    if (data.length === 0) {
-      client.say(
-        target,
-        "Participez à la cérémonie de répartition avec le !choixpeau avant de distribuer des points !"
-      );
+    if (channel[1] !== "nayrulive" || params.length !== 2) {
       return;
-    } else {
-      if (data[0].role !== "Mod") {
+    }
+    if (timeDiff(now, commandHistory[channel[1]].give, 10)) {
+      const { username } = context;
+      const targetUsername = params[0];
+      const nbPoints = parseInt(params[1]);
+
+      // Check if user is mod
+
+      const role = db.oneOrNone(selectRoleFromSpecificUserQuery, username);
+      if (role.length === 0) {
         client.say(
           target,
-          "Bien essayé, mais seuls les préfets peuvent donner des points"
+          "Participez à la cérémonie de répartition avec le !choixpeau avant de distribuer des points !"
         );
         return;
-      }
-      db.any(selectSpecificUserQuery, targetUsername).then(function(user) {
-        console.log(user);
+      } else {
+        if (role !== "Mod") {
+          client.say(
+            target,
+            "Bien essayé, mais seuls les préfets peuvent donner des points"
+          );
+          return;
+        }
+        const user = db.oneOrNone(selectSpecificUserQuery, targetUsername);
         if (user.length === 0) {
           client.say(
             target,
@@ -422,17 +420,23 @@ function give(target, context, params, isAddition = true) {
           );
           return;
         } else {
-          const { housename } = user[0];
+          const { housename, earned_points } = user[0];
+          if (earned_points - nbPoints < 0 && !isAddition) {
+            client.say(
+              target,
+              "Ce sorcier ne peut perdre que des points qu'il a gagné, sinon c'est pas très juste quand même"
+            );
+            return;
+          }
           db.tx(t => {
             // creating a sequence of transaction queries:
-
             const q1 = t.none(
               isAddition ? addPointsToUserQuery : removePointsToUserQuery,
-              [parseInt(nbPoints), username]
+              [nbPoints, username]
             );
             const q2 = t.none(
               isAddition ? addPointsToHouseQuery : removePointsToHouseQuery,
-              [parseInt(nbPoints), housename]
+              [nbPoints, housename]
             );
 
             // returning a promise that determines a successful transaction:
@@ -450,10 +454,23 @@ function give(target, context, params, isAddition = true) {
               console.error(error);
             });
         }
-      });
-    }
-  });
+      }
+      commandHistory[channel[1]].give = now;
+    } else return;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
 }
+/**
+ *
+ * Remove points from an user :
+ * !remove <username> <points>
+ *
+ * @param {*} target
+ * @param {*} context
+ * @param {*} params
+ */
 
 function remove(target, context, params) {
   const channel = target.split("#");
@@ -461,15 +478,6 @@ function remove(target, context, params) {
     return;
   }
   give(target, context, params, false);
-}
-
-// Helper function to send the correct type of message:
-function sendMessage(target, context, message) {
-  if (context["message-type"] === "whisper") {
-    client.whisper(target, message);
-  } else {
-    client.say(target, message);
-  }
 }
 
 // Create a client with our options:
