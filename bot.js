@@ -160,7 +160,7 @@ function insta(target) {
   const now = moment();
   const channel = target.split("#");
   const msg = "Les jolies photos, c'est par là : " + instaLink[channel[1]];
-  if (timeDiff(now, channel[1].insta)) {
+  if (timeDiff(now, commandHistory[channel[1].insta])) {
     client.say(target, msg);
     commandHistory[channel[1]].insta = now;
   } else return;
