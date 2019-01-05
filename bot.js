@@ -1,6 +1,6 @@
 const {
   oauth,
-  clientId,
+  clientID,
   connection,
   shopLink,
   youtubeLink,
@@ -8,8 +8,8 @@ const {
   twitterLink,
   commandsAvailable,
   channelsJoined
-} = require("./config");
-const { timeDiff } = require("./utils");
+} = require('./config');
+const { timeDiff } = require('./utils');
 const {
   selectSpecificUserQuery,
   selectAllHousesQuery,
@@ -19,13 +19,13 @@ const {
   selectRoleFromSpecificUserQuery,
   removePointsToUserQuery,
   removePointsToHouseQuery
-} = require("./sqlQueries");
-const pgp = require("pg-promise")();
+} = require('./sqlQueries');
+const pgp = require('pg-promise')();
 const db = pgp(connection);
-const fetch = require("node-fetch");
-const tmi = require("tmi.js");
-const moment = require("moment");
-const oldPointer = moment("20000101");
+const fetch = require('node-fetch');
+const tmi = require('tmi.js');
+const moment = require('moment');
+const oldPointer = moment('20000101');
 const commandHistory = {
   nayrulive: {
     choixpeau: oldPointer,
@@ -66,14 +66,14 @@ const opts = {
     reconnect: true
   },
   identity: {
-    username: "klervibot",
-    password: "oauth:" + oauth
+    username: 'klervibot',
+    password: 'oauth:' + oauth
   },
   channels: channelsJoined
 };
 
 // Valid commands start with:
-const commandPrefix = "!";
+const commandPrefix = '!';
 // Define configuration options:
 
 // These are the commands the bot knows (defined below), add each new command here:
@@ -105,7 +105,7 @@ const knownCommands = {
 
 function commands(target) {
   const now = moment();
-  const channel = target.split("#");
+  const channel = target.split('#');
   const msg = commandsAvailable[channel[1]];
   if (timeDiff(now, commandHistory[channel[1]].commands)) {
     client.say(target, msg);
@@ -119,11 +119,11 @@ function commands(target) {
  */
 
 function boutique(target) {
-  if (channel[1] !== "collinsandkosuke" || channel[1] !== "frozencrystal") {
+  if (channel[1] !== 'collinsandkosuke' || channel[1] !== 'frozencrystal') {
     return;
   }
   const now = moment();
-  const channel = target.split("#");
+  const channel = target.split('#');
   const msg = shopLink[channel[1]];
   if (timeDiff(now, commandHistory[channel[1]].commands)) {
     client.say(target, msg);
@@ -139,7 +139,7 @@ function boutique(target) {
 
 function youtube(target) {
   const now = moment();
-  const channel = target.split("#");
+  const channel = target.split('#');
   const msg =
     "Pour nous rejoindre sur YouTube, c'est par ici : " +
     youtubeLink[channel[1]];
@@ -158,7 +158,7 @@ function youtube(target) {
 
 function insta(target) {
   const now = moment();
-  const channel = target.split("#");
+  const channel = target.split('#');
   const msg = "Les jolies photos, c'est par là : " + instaLink[channel[1]];
   if (timeDiff(now, commandHistory[channel[1].insta])) {
     client.say(target, msg);
@@ -173,13 +173,13 @@ function insta(target) {
  */
 
 function serveur(target) {
-  if (channel[1] !== "collinsandkosuke") {
+  if (channel[1] !== 'collinsandkosuke') {
     return;
   }
   const now = moment();
-  const channel = target.split("#");
+  const channel = target.split('#');
   const msg =
-    "C&K jouent sur un serveur privé VeryGames. Si tu es intéressé, voici le lien pour louer un serveur : https://www.verygames.net/fr !";
+    'C&K jouent sur un serveur privé VeryGames. Si tu es intéressé, voici le lien pour louer un serveur : https://www.verygames.net/fr !';
   if (timeDiff(now, commandHistory[channel[1]].server)) {
     client.say(target, msg);
     commandHistory[channel[1]].server = now;
@@ -194,8 +194,8 @@ function serveur(target) {
 
 function twitter(target) {
   const now = moment();
-  const channel = target.split("#");
-  const msg = "Pour être au courant de tout : " + twitterLink[channel[1]];
+  const channel = target.split('#');
+  const msg = 'Pour être au courant de tout : ' + twitterLink[channel[1]];
   if (timeDiff(now, commandHistory[channel[1]].twitter)) {
     client.say(target, msg);
     commandHistory[channel[1]].twitter = now;
@@ -209,12 +209,12 @@ function twitter(target) {
  */
 
 function uptime(target) {
-  const channel = target.split("#");
+  const channel = target.split('#');
   const now = moment();
 
   fetch(`https://api.twitch.tv/helix/streams?user_login=${channel[1]}`, {
-    method: "GET",
-    headers: { "Content-Type": "application/json", "Client-ID": clientId }
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json', 'Client-ID': clientID }
   })
     .then(res => res.json())
     .then(json => {
@@ -267,8 +267,8 @@ function uptime(target) {
 async function coupe(target) {
   try {
     const now = moment();
-    const channel = target.split("#");
-    if (channel[1] !== "nayrulive") {
+    const channel = target.split('#');
+    if (channel[1] !== 'nayrulive') {
       return;
     }
     if (timeDiff(now, commandHistory[channel[1]].coupe)) {
@@ -294,9 +294,9 @@ async function coupe(target) {
 
 async function maison(target, context, params) {
   try {
-    const channel = target.split("#");
+    const channel = target.split('#');
     const now = moment();
-    if (channel[1] !== "nayrulive") {
+    if (channel[1] !== 'nayrulive') {
       return;
     }
     if (timeDiff(now, commandHistory[channel[1]].maison)) {
@@ -335,8 +335,8 @@ async function maison(target, context, params) {
 async function choixpeau(target, context) {
   try {
     const now = moment();
-    const channel = target.split("#");
-    if (channel[1] !== "nayrulive") {
+    const channel = target.split('#');
+    if (channel[1] !== 'nayrulive') {
       return;
     }
 
@@ -346,8 +346,8 @@ async function choixpeau(target, context) {
       const role =
         context.mod ||
         (context.badges !== null && context.badges.broadcaster === 1)
-          ? "Mod"
-          : "None";
+          ? 'Mod'
+          : 'None';
 
       const user = await db.oneOrNone(selectSpecificUserQuery, username);
       if (user === null) {
@@ -386,10 +386,10 @@ async function choixpeau(target, context) {
 
 async function give(target, context, params, isAddition = true) {
   try {
-    const channel = target.split("#");
+    const channel = target.split('#');
     const now = moment();
 
-    if (channel[1] !== "nayrulive" || params.length !== 2) {
+    if (channel[1] !== 'nayrulive' || params.length !== 2) {
       return;
     }
     if (timeDiff(now, commandHistory[channel[1]].give, 10)) {
@@ -408,14 +408,14 @@ async function give(target, context, params, isAddition = true) {
       if (role === null) {
         client.say(
           target,
-          "Participez à la cérémonie de répartition avec le !choixpeau avant de distribuer des points !"
+          'Participez à la cérémonie de répartition avec le !choixpeau avant de distribuer des points !'
         );
         return;
       } else {
-        if (role.role !== "Mod") {
+        if (role.role !== 'Mod') {
           client.say(
             target,
-            "Bien essayé, mais seuls les préfets peuvent donner des points"
+            'Bien essayé, mais seuls les préfets peuvent donner des points'
           );
           return;
         }
@@ -442,7 +442,7 @@ async function give(target, context, params, isAddition = true) {
             // creating a sequence of transaction queries:
             const q1 = t.none(
               isAddition ? addPointsToUserQuery : removePointsToUserQuery,
-              [nbPoints, username]
+              [nbPoints, targetUsername]
             );
             const q2 = t.none(
               isAddition ? addPointsToHouseQuery : removePointsToHouseQuery,
@@ -483,8 +483,8 @@ async function give(target, context, params, isAddition = true) {
  */
 
 function remove(target, context, params) {
-  const channel = target.split("#");
-  if (channel[1] !== "nayrulive") {
+  const channel = target.split('#');
+  if (channel[1] !== 'nayrulive') {
     return;
   }
   give(target, context, params, false);
@@ -494,19 +494,19 @@ function remove(target, context, params) {
 let client = new tmi.client(opts);
 
 // Register our event handlers (defined below):
-client.on("message", onMessageHandler);
-client.on("connected", onConnectedHandler);
-client.on("disconnected", onDisconnectedHandler);
+client.on('message', onMessageHandler);
+client.on('connected', onConnectedHandler);
+client.on('disconnected', onDisconnectedHandler);
 
 // Connect to Twitch:
 client.connect();
 
-client.on("connected", (adress, port) => {
+client.on('connected', (adress, port) => {
   console.log(
     client.getUsername() +
       " s'est connecté sur : " +
       adress +
-      ", port : " +
+      ', port : ' +
       port
   );
 });
@@ -516,8 +516,8 @@ client.on("connected", (adress, port) => {
  *
  */
 
-client.on("subscription", function(channel, username) {
-  if (channel === "nayrulive") {
+client.on('subscription', function(channel, username) {
+  if (channel === 'nayrulive') {
     db.any(selectSpecificUserQuery, username).then(function(data) {
       if (data.length === 0) {
         return;
@@ -554,13 +554,13 @@ function onMessageHandler(target, context, msg, self) {
   // This isn't a command since it has no prefix:
   if (msg.substr(0, 1) !== commandPrefix) {
     console.log(
-      `[${target} (${context["message-type"]})] ${context.username}: ${msg}`
+      `[${target} (${context['message-type']})] ${context.username}: ${msg}`
     );
     return;
   }
 
   // Split the message into individual words:
-  const parse = msg.slice(1).split(" ");
+  const parse = msg.slice(1).split(' ');
   // The command name is the first (0th) one:
   const commandName = parse[0];
   // The rest (if any) are the parameters:
