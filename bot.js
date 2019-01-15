@@ -54,6 +54,7 @@ const commandHistory = {
     youtube: oldPointer,
     insta: oldPointer,
     uptime: oldPointer,
+    rp: oldPointer,
     server: oldPointer
   }
 };
@@ -90,7 +91,8 @@ const knownCommands = {
   commands,
   boutique,
   give,
-  remove
+  remove,
+  rp
 };
 
 /**
@@ -119,11 +121,11 @@ function commands(target) {
  */
 
 function boutique(target) {
+  const channel = target.split('#');
   if (channel[1] !== 'collinsandkosuke' || channel[1] !== 'frozencrystal') {
     return;
   }
   const now = moment();
-  const channel = target.split('#');
   const msg = shopLink[channel[1]];
   if (timeDiff(now, commandHistory[channel[1]].commands)) {
     client.say(target, msg);
@@ -166,6 +168,20 @@ function insta(target) {
   } else return;
 }
 
+function rp(target) {
+  const channel = target.split('#');
+  if (channel[1] !== 'collinsandkosuke') {
+    return;
+  }
+  const now = moment();
+  const msg =
+    "Collins incarne un personnage qui a sa propre histoire et sa propre identité : Ethan Collins. Il est interdit de donner des informations concernant le RP d'autres streamers dont Collins n'a pas connaissance en jeu. Merci de ne pas juger le RP des autres joueurs.";
+  if (timeDiff(now, commandHistory[channel[1]].rp)) {
+    client.say(target, msg);
+    commandHistory[channel[1]].rp = now;
+  } else return;
+}
+
 /**
  * Returns the link of the server for the channel
  *
@@ -173,11 +189,11 @@ function insta(target) {
  */
 
 function serveur(target) {
+  const channel = target.split('#');
   if (channel[1] !== 'collinsandkosuke') {
     return;
   }
   const now = moment();
-  const channel = target.split('#');
   const msg =
     'C&K jouent sur un serveur privé VeryGames. Si tu es intéressé, voici le lien pour louer un serveur : https://www.verygames.net/fr !';
   if (timeDiff(now, commandHistory[channel[1]].server)) {
