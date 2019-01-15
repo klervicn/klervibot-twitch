@@ -54,8 +54,7 @@ const commandHistory = {
     youtube: oldPointer,
     insta: oldPointer,
     uptime: oldPointer,
-    rp: oldPointer,
-    server: oldPointer
+    rp: oldPointer
   }
 };
 
@@ -87,7 +86,6 @@ const knownCommands = {
   twitter,
   maison,
   uptime,
-  serveur,
   commands,
   boutique,
   give,
@@ -179,26 +177,6 @@ function rp(target) {
   if (timeDiff(now, commandHistory[channel[1]].rp)) {
     client.say(target, msg);
     commandHistory[channel[1]].rp = now;
-  } else return;
-}
-
-/**
- * Returns the link of the server for the channel
- *
- * @param {*} target
- */
-
-function serveur(target) {
-  const channel = target.split('#');
-  if (channel[1] !== 'collinsandkosuke') {
-    return;
-  }
-  const now = moment();
-  const msg =
-    'C&K jouent sur un serveur privé VeryGames. Si tu es intéressé, voici le lien pour louer un serveur : https://www.verygames.net/fr !';
-  if (timeDiff(now, commandHistory[channel[1]].server)) {
-    client.say(target, msg);
-    commandHistory[channel[1]].server = now;
   } else return;
 }
 
