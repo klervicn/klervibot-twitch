@@ -33,7 +33,6 @@ const commandHistory = {
     choixpeau: oldPointer,
     commands: oldPointer,
     coupe: oldPointer,
-    discord: oldPointer,
     give: oldPointer,
     insta: oldPointer,
     maison: oldPointer,
@@ -59,6 +58,15 @@ const commandHistory = {
     insta: oldPointer,
     uptime: oldPointer,
     rp: oldPointer
+  },
+  natsukerugame: {
+    discord: oldPointer,
+    commands: oldPointer,
+    coupe: oldPointer,
+    insta: oldPointer,
+    twitter: oldPointer,
+    uptime: oldPointer,
+    youtube: oldPointer
   }
 };
 
@@ -138,7 +146,11 @@ function boutique(target) {
 
 function discord(target) {
   const channel = target.split("#");
-  if (channel[1] !== "collinsandkosuke" && channel[1] !== "nayrulive") {
+  if (
+    channel[1] !== "collinsandkosuke" &&
+    channel[1] !== "nayrulive" &&
+    channel[1] !== "natsukerugame"
+  ) {
     return;
   }
   const now = moment();
@@ -178,9 +190,26 @@ function insta(target) {
   const now = moment();
   const channel = target.split("#");
   const msg = "Les jolies photos, c'est par là : " + instaLink[channel[1]];
-  if (timeDiff(now, commandHistory[channel[1].insta])) {
+  if (timeDiff(now, commandHistory[channel[1]].insta)) {
     client.say(target, msg);
     commandHistory[channel[1]].insta = now;
+  } else return;
+}
+
+function discord(target) {
+  const channel = target.split("#");
+  if (
+    channel[1] !== "collinsandkosuke" &&
+    channel[1] !== "nayrulive" &&
+    channel[1] !== "natsukerugame"
+  ) {
+    return;
+  }
+  const now = moment();
+  const msg = "Rejoins-nous ! " + discordLink[channel[1]];
+  if (timeDiff(now, commandHistory[channel[1]].discord)) {
+    client.say(target, msg);
+    commandHistory[channel[1]].discord = now;
   } else return;
 }
 
